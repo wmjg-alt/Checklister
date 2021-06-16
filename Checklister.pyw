@@ -1,36 +1,53 @@
 from tkinter import *
 import math
+import json
+import os
 
 starting_input = "Start your To-Do List here"
+startFlag= False
 recent_forget = list()
+box = {'todo': [],
+       'forget':[]}
+List_folder = "checklist.json"
 
+'''
 def eleminator(butt, tex):
     butt.pack_forget()
     recent_forget = tex
+'''
 
 def undo():
-    global recent_forget
+    global box
     try:
-        e.insert(0, recent_forget[-1])
-        recent_forget = recent_forget[:-1]
+        e.insert(0, box['forget'][-1])
+        box['forget'] = box['forget'][:-1]
         stopgap()
     except:
         pass
 
+def dumper(dat):
+    with open(List_folder, 'w')as lf:
+        json.dump(dat,lf)
+
 def makeChecker(t):
-    global recent_forget
+    global box
     b = Button()
-    b = Button(root, text=t, command=lambda:[b.pack_forget(),recent_forget.append(t)], height=2,padx=1000, bg='black', fg='white', font='sans 16 bold', wraplength=300)
-    #make_draggable(b)
+    b = Button(root, text=t, command=lambda:[b.pack_forget(),
+                                             box['forget'].append(t),
+                                             box['todo'].remove(t),
+                                             dumper(box)], height=2,padx=1000, bg='black', fg='white', font='sans 16 bold', wraplength=300)
     b.pack()
     e.focus_set()
+    box['todo'].append(t)
 
 def stopgap():
+    global box
     if e.get() and e.get() != starting_input:
         makeChecker(e.get().upper())
         e.delete(0, "end")
+        dumper(box)
 
-def some_callback(event): # note that you must include the event as an arg, even if you don't use it.
+def some_callback(event): 
     e.delete(0, "end")
     return None
 
@@ -40,7 +57,10 @@ def key_pressed(event):
         undo()
     if event.char == '\r':
         stopgap()
-        
+    '''
+    if event.char == 'l':
+
+    '''
     if starting_input in e.get():
         e.delete(0,'end')
         e.insert(0, event.char)
@@ -85,6 +105,13 @@ e.insert(0, starting_input)
 e.focus_set()
 
 root.bind("<Key>",key_pressed)
+
+if box['todo'] == [] and box['forget'] == [] and os.path.exists(List_folder):
+    with open(List_folder, 'r') as lf:
+        tmp = json.load(lf)
+    for i in tmp['todo']:
+        makeChecker(i)
+    box['forget'] = tmp['forget']
 
 #Run EventLoop
 if __name__ == "__main__":
